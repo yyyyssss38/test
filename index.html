@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GREEN GUIDE - 올바른 분리배출의 시작</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        eco: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-eco-50 text-gray-800 min-h-screen flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-eco-100 sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="resetApp()">
+                <div class="bg-eco-600 text-white p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-leaf text-xl"></i>
+                </div>
+                <span class="text-xl font-extrabold tracking-tight text-eco-800">GREEN GUIDE</span>
+            </div>
+            <span class="text-xs bg-eco-100 text-eco-700 px-3 py-1 rounded-full font-medium">분리배출 가이드</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow flex flex-col">
+        
+        <!-- 검색 섹션 (입력 화면) -->
+        <section id="search-section" class="bg-white rounded-2xl shadow-md p-6 border border-eco-100 space-y-4">
+            <div class="flex items-center space-x-2 pb-2 border-b border-gray-100">
+                <i class="fa-solid fa-keyboard text-eco-600 text-lg"></i>
+                <h2 class="font-bold text-gray-800">쓰레기 분리배출 검색</h2>
+            </div>
+
+            <div class="relative space-y-2">
+                <div class="flex space-x-2">
+                    <div class="relative flex-grow">
+                        <input type="text" id="text-input" placeholder="예: 페트병, 치약, 택배 상자, 우유팩, 건전지..." 
+                            class="w-full pl-4 pr-10 py-3.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-eco-500 text-sm shadow-sm"
+                            oninput="handleAutocomplete(this.value)"
+                            onkeypress="if(event.key === 'Enter') searchByText()">
+                        <button onclick="clearText()" class="absolute right-3 top-4 text-gray-400 hover:text-gray-600">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <button onclick="searchByText()" class="bg-eco-600 hover:bg-eco-700 text-white px-6 py-3.5 rounded-xl font-bold transition-colors shadow-md flex items-center justify-center">
+                        <i class="fa-solid fa-search text-lg"></i>
+                    </button>
+                </div>
+                <!-- 자동완성 리스트 -->
+                <div id="autocomplete-list" class="absolute z-10 w-full bg-white border border-gray-200 rounded-xl mt-1 shadow-lg hidden max-h-56 overflow-y-auto"></div>
+            </div>
+
+            <!-- 빠른 추천 검색어 -->
+            <div class="space-y-2 pt-2">
+                <span class="text-xs font-bold text-gray-500">추천 검색어 (클릭 시 즉시 확인):</span>
+                <div class="flex flex-wrap gap-1.5">
+                    <button onclick="quickSearch('페트병')" class="text-xs bg-eco-50 hover:bg-eco-100 text-eco-700 border border-eco-200 px-3 py-1.5 rounded-full font-medium">🥤 페트병</button>
+                    <button onclick="quickSearch('치약')" class="text-xs bg-eco-50 hover:bg-eco-100 text-eco-700 border border-eco-200 px-3 py-1.5 rounded-full font-medium">🪥 치약</button>
+                    <button onclick="quickSearch('택배 상자')" class="text-xs bg-eco-50 hover:bg-eco-100 text-eco-700 border border-eco-200 px-3 py-1.5 rounded-full font-medium">📦 택배 상자</button>
+                    <button onclick="quickSearch('우유팩')" class="text-xs bg-eco-50 hover:bg-eco-100 text-eco-700 border border-eco-200 px-3 py-1.5 rounded-full font-medium">🥛 우유팩</button>
+                    <button onclick="quickSearch('건전지')" class="text-xs bg-eco-50 hover:bg-eco-100 text-eco-700 border border-eco-200 px-3 py-1.5 rounded-full font-medium">🔋 건전지</button>
+                    <button onclick="quickSearch('프라이팬')" class="text-xs bg-eco-50 hover:bg-eco-100 text-eco-700 border border-eco-200 px-3 py-1.5 rounded-full font-medium">🍳 프라이팬</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 통합 검색 결과 화면 -->
+        <section id="result-section" class="hidden space-y-6">
+            <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-eco-100">
+                <button onclick="resetApp()" class="text-sm text-eco-700 hover:text-eco-800 font-semibold flex items-center space-x-1">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>다른 쓰레기 검색하기</span>
+                </button>
+                <span class="text-xs text-gray-400">GREEN GUIDE RESULT</span>
+            </div>
+
+            <!-- 결과 카드 -->
+            <div class="bg-white rounded-2xl shadow-md p-6 border border-eco-100 space-y-6">
+                
+                <!-- 1. 인식한 물건 이름 & 2. 전체 분리배출 종류 -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-gray-100 pb-6 gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div id="result-icon-box" class="w-16 h-16 bg-eco-100 text-eco-700 rounded-2xl flex items-center justify-center text-3xl shadow-sm">
+                            <i class="fa-solid fa-recycle"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-semibold text-eco-600 uppercase tracking-wider">검색된 물품</span>
+                            <h2 id="res-item-name" class="text-2xl font-extrabold text-gray-900">-</h2>
+                        </div>
+                    </div>
+                    <div class="bg-eco-50 border border-eco-200 px-4 py-3 rounded-xl flex items-center space-x-3">
+                        <div class="text-eco-600 text-xl"><i class="fa-solid fa-box-open"></i></div>
+                        <div>
+                            <span class="block text-xs font-semibold text-eco-800">전체 배출 종류</span>
+                            <span id="res-total-type" class="text-sm font-bold text-eco-700">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 구성 재질 및 부품 목록 & 4. 부품별 배출 방법 -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center space-x-2">
+                        <i class="fa-solid fa-layer-group text-eco-600"></i>
+                        <span>구성 재질 및 부품별 배출 방법</span>
+                    </h3>
+                    <div id="res-parts-container" class="grid grid-cols-1 gap-3">
+                        <!-- 동적 부품 목록 생성 -->
+                    </div>
+                </div>
+
+                <!-- 5. 재활용 가능 여부 & 6. 주의사항 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-2">
+                        <div class="flex items-center space-x-2 text-blue-800 font-bold text-sm">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>재활용 가능 여부</span>
+                        </div>
+                        <p id="res-recyclable" class="text-sm text-blue-900 font-medium">-</p>
+                    </div>
+                    <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 space-y-2">
+                        <div class="flex items-center space-x-2 text-orange-800 font-bold text-sm">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span>필수 주의사항</span>
+                        </div>
+                        <p id="res-caution" class="text-sm text-orange-900 font-medium">-</p>
+                    </div>
+                </div>
+
+                <!-- 7. 환경 보호 팁 -->
+                <div class="bg-gradient-to-r from-eco-600 to-emerald-600 text-white rounded-2xl p-5 shadow-sm space-y-2">
+                    <div class="flex items-center space-x-2 font-bold text-sm">
+                        <i class="fa-solid fa-earth-asia"></i>
+                        <span>환경 보호 팁</span>
+                    </div>
+                    <p id="res-eco-tip" class="text-sm font-light leading-relaxed">-</p>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 py-6 mt-12 text-center text-xs text-gray-400">
+        <p>&copy; 2026 GREEN GUIDE. All rights reserved.</p>
+    </footer>
+
+    <!-- JavaScript 로직 -->
+    <script>
+        const database = {
+            "페트병": {
+                name: "투명 페트병",
+                totalType: "무색 페트병 전용 수거함",
+                icon: "fa-bottle-water",
+                recyclable: "100% 재활용 가능 (의류, 가방 등 고품질 재생원료)",
+                caution: "내용물을 깨끗이 비우고, 라벨을 떼어낸 뒤 찌그러뜨려 뚜껑을 닫아 배출하세요.",
+                ecoTip: "페트병 라벨을 떼고 뚜껑을 닫아 배출하면 재활용 효율이 20% 이상 향상됩니다!",
+                parts: [
+                    { part: "몸체 (페트)", material: "PET (플라스틱)", method: "내용물 세척 후 라벨 제거 및 압착 배출", badge: "플라스틱(무색)" },
+                    { part: "라벨 (비닐)", material: "PP/PE", method: "찢어서 일반쓰레기(종량제봉투)로 배출", badge: "비닐류" },
+                    { part: "뚜껑 (플라스틱)", material: "HDPE", method: "몸체와 분리하거나 찌그러트린 몸체에 닫아서 함께 배출", badge: "플라스틱" }
+                ]
+            },
+            "치약": {
+                name: "치약 튜브",
+                totalType: "일반쓰레기 (종량제봉투)",
+                icon: "fa-pump-soap",
+                recyclable: "일부 재활용 제한 (복합재질)",
+                caution: "내부의 남은 치약을 물로 헹궈내기 어렵고 알루미늄/플라스틱 복합 재질인 경우 일반쓰레기로 배출하세요.",
+                ecoTip: "치약 마지막 한 방울까지 밀대나 짜개로 모두 사용하고 버리면 자원 낭비를 줄일 수 있어요.",
+                parts: [
+                    { part: "튜브 몸체", material: "알루미늄+플라스틱 복합재질", method: "깨끗이 씻기 어려운 경우 일반쓰레기(종량제봉투)", badge: "일반쓰레기" },
+                    { part: "뚜껑", material: "PP (플라스틱)", method: "플라스틱으로 별도 분리배출", badge: "플라스틱" }
+                ]
+            },
+            "택배 상자": {
+                name: "골판지 택배 박스",
+                totalType: "종이류 (골판지)",
+                icon: "fa-box-archive",
+                recyclable: "100% 재활용 가능",
+                caution: "상자에 붙어 있는 택배 송장(스티커), 테이프, 철심 등을 완벽히 제거한 후 배출하세요.",
+                ecoTip: "상자를 접어서 배출하면 수거 공간을 줄이고 재활용 수거 차량의 효율을 높여줍니다.",
+                parts: [
+                    { part: "박스 몸체", material: "골판지 (종이)", method: "테이프 및 송장 제거 후 납작하게 접어서 배출", badge: "종이류" },
+                    { part: "테이프 및 송장", material: "비닐 및 점착제", method: "제거 후 일반쓰레기(종량제봉투)로 배출", badge: "일반쓰레기" }
+                ]
+            },
+            "우유팩": {
+                name: "종이팩 / 우유팩",
+                totalType: "종이팩 전용 수거함",
+                icon: "fa-cart-flatbed",
+                recyclable: "100% 재활용 가능 (화장지 원료)",
+                caution: "일반 신문지나 박스(종이류)와 섞이지 않도록 반드시 '종이팩 전용함'에 따로 배출해야 합니다.",
+                ecoTip: "물로 내부를 깨끗이 헹군 후 펼쳐서 말려 배출하면 재활용률이 훨씬 높아집니다.",
+                parts: [
+                    { part: "팩 몸체", material: "종이 + 폴리에틸렌 코팅", method: "내부 세척 후 펼쳐서 종이팩 전용함 배출", badge: "종이팩류" }
+                ]
+            },
+            "건전지": {
+                name: "폐건전지",
+                totalType: "폐건전지 전용 수거함",
+                icon: "fa-battery-full",
+                recyclable: "100% 재활용 가능 (금속 자원 추출)",
+                caution: "일반쓰레기와 섞여 버려지면 화재나 토양 오염을 유발할 수 있으므로 반드시 전용 수거함에 넣으세요.",
+                ecoTip: "다쓴 건전지는 아파트 단지나 주민센터의 폐건전지 수거함에 모아서 배출해 주세요.",
+                parts: [
+                    { part: "건전지 전체", material: "아연, 망간, 리튬 등", method: "주민센터 또는 아파트 전용 수거함에 배출", badge: "폐건전지" }
+                ]
+            },
+            "프라이팬": {
+                name: "프라이팬 / 냄비",
+                totalType: "고철류 (고철 수거함)",
+                icon: "fa-kitchen-set",
+                recyclable: "재활용 가능",
+                caution: "코팅이 벗겨지거나 플라스틱 손잡이가 있는 경우, 손잡이를 분리할 수 있다면 고철과 플라스틱으로 각각 분리하세요.",
+                ecoTip: "철제 냄비와 프라이팬은 소중한 고철 자원이므로 일반쓰레기가 아닌 고철류로 배출해야 합니다.",
+                parts: [
+                    { part: "팬 본체", material: "철 또는 알루미늄", method: "고철류 수거함에 배출", badge: "고철류" },
+                    { part: "손잡이", material: "플라스틱 또는 베이클라이트", method: "분리 가능한 경우 플라스틱 또는 일반쓰레기", badge: "플라스틱/일반" }
+                ]
+            }
+        };
+
+        const keywords = Object.keys(database);
+
+        function handleAutocomplete(val) {
+            const listEl = document.getElementById('autocomplete-list');
+            const query = val.trim();
+            if (!query) {
+                listEl.classList.add('hidden');
+                return;
+            }
+            const filtered = keywords.filter(k => k.includes(query));
+            if (filtered.length === 0) {
+                listEl.classList.add('hidden');
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(item => `
+                <div onclick="selectKeyword('${item}')" class="px-4 py-2.5 text-sm hover:bg-eco-50 cursor-pointer flex items-center justify-between border-b border-gray-50 last:border-none">
+                    <span class="font-medium text-gray-800">${item}</span>
+                    <span class="text-xs text-eco-600 font-semibold bg-eco-50 px-2 py-0.5 rounded">선택 <i class="fa-solid fa-arrow-right ml-1"></i></span>
+                </div>
+            `).join('');
+            listEl.classList.remove('hidden');
+        }
+
+        function selectKeyword(item) {
+            document.getElementById('text-input').value = item;
+            document.getElementById('autocomplete-list').classList.add('hidden');
+            searchByText();
+        }
+
+        function quickSearch(item) {
+            document.getElementById('text-input').value = item;
+            document.getElementById('autocomplete-list').classList.add('hidden');
+            searchByText();
+        }
+
+        function clearText() {
+            document.getElementById('text-input').value = '';
+            document.getElementById('autocomplete-list').classList.add('hidden');
+        }
+
+        function searchByText() {
+            const query = document.getElementById('text-input').value.trim();
+            if (!query) {
+                alert("검색할 쓰레기 이름을 입력해 주세요.");
+                return;
+            }
+
+            document.getElementById('autocomplete-list').classList.add('hidden');
+            document.getElementById('search-section').classList.add('hidden');
+
+            let matchedData = database[query];
+            if (!matchedData) {
+                const foundKey = Object.keys(database).find(k => query.includes(k));
+                if (foundKey) {
+                    matchedData = database[foundKey];
+                } else {
+                    matchedData = {
+                        name: query,
+                        totalType: "종합 분리배출함 또는 일반쓰레기",
+                        icon: "fa-recycle",
+                        recyclable: "재질 분리 여부에 따라 다름",
+                        caution: "이물질이나 음식물이 묻어있는 경우 깨끗이 씻거나 닦아서 배출해야 합니다.",
+                        ecoTip: `"${query}"(은)는 올바른 분리배출 수칙을 지킬 때 깨끗한 자원으로 다시 태어날 수 있습니다.`,
+                        parts: [
+                            { part: "본체 및 부품", material: "복합 재질 / 기타", method: "이물질 제거 후 해당 재질 수거함 또는 일반쓰레기 배출", badge: "분리배출" }
+                        ]
+                    };
+                }
+            }
+
+            document.getElementById('res-item-name').innerText = matchedData.name;
+            document.getElementById('res-total-type').innerText = matchedData.totalType;
+            document.getElementById('result-icon-box').innerHTML = `<i class="fa-solid ${matchedData.icon}"></i>`;
+            document.getElementById('res-recyclable').innerText = matchedData.recyclable;
+            document.getElementById('res-caution').innerText = matchedData.caution;
+            document.getElementById('res-eco-tip').innerText = matchedData.ecoTip;
+
+            const partsContainer = document.getElementById('res-parts-container');
+            partsContainer.innerHTML = matchedData.parts.map(p => `
+                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-2 shadow-sm">
+                    <div class="space-y-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-bold text-gray-800 text-sm">${p.part}</span>
+                            <span class="text-xs bg-eco-100 text-eco-800 px-2.5 py-0.5 rounded-full font-semibold">${p.badge}</span>
+                        </div>
+                        <p class="text-xs text-gray-500">재질: <span class="text-gray-700 font-medium">${p.material}</span></p>
+                    </div>
+                    <div class="text-xs bg-white border border-gray-200 px-3 py-2 rounded-lg text-gray-700 font-medium shadow-sm">
+                        <i class="fa-solid fa-check text-eco-600 mr-1"></i> ${p.method}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('result-section').classList.remove('hidden');
+        }
+
+        function resetApp() {
+            document.getElementById('result-section').classList.add('hidden');
+            document.getElementById('search-section').classList.remove('hidden');
+            document.getElementById('text-input').value = '';
+        }
+    </script>
+</body>
+</html>
